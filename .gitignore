@@ -1,0 +1,6 @@
+.env
+data/*
+output/*
+.venv
+__pycache__/*
+.idea
