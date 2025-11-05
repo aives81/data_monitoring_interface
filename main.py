@@ -1,6 +1,9 @@
 import os
-from config import YEAR, MONTH, BASE_DIR_MONITORING_INTERFACE, COUNTRIES, LOGO
-from collect import collect_all_monitoring_data
+import pandas as pd
+
+from config import YEAR, MONTH, BASE_DIR_MONITORING_INTERFACE, BASE_DIR_DATA_INTERFACE, COUNTRIES, LOGO
+from collect_monitoring_interface import collect_all_monitoring_data
+from collect_data_interface import collect_data_interface
 from openpyxl import load_workbook
 from openpyxl.drawing.image import Image
 from openpyxl.styles import Alignment
@@ -14,10 +17,12 @@ def main():
     print(f"Consolidation du {YEAR}-{MONTH}-{day}")
 
     # Collecte globale
-    df = collect_all_monitoring_data(BASE_DIR_MONITORING_INTERFACE, COUNTRIES, YEAR, MONTH, day)
-    if df.empty:
-        print("⛔ Aucune donnée trouvée pour ce jour.")
-        return
+    monitoring_df = collect_all_monitoring_data(BASE_DIR_MONITORING_INTERFACE, COUNTRIES, YEAR, MONTH, day)
+    data_interface_df = collect_data_interface(BASE_DIR_DATA_INTERFACE, COUNTRIES, YEAR, MONTH, day)
+
+    #if monitoring_df.empty:
+    #    print("⛔ Aucune donnée trouvée pour ce jour.")
+    #    return
 
     columns_order = [
         "Interface",
@@ -36,14 +41,15 @@ def main():
 
     # Ajoute les colonnes manquantes si besoin
     for col in columns_order:
-        if col not in df.columns:
-            df[col] = ""
-    df = df[columns_order]
+        if col not in monitoring_df.columns:
+            monitoring_df[col] = ""
+    monitoring_df = monitoring_df[columns_order]
 
     # Sauvegarde Excel
     os.makedirs("output", exist_ok=True)
     output_file = f"output/consolidation_{YEAR}_{MONTH}_{day}.xlsx"
-    df.to_excel(output_file, index=False, startrow=4)
+    df_merged = pd.concat([monitoring_df, data_interface_df], ignore_index=True)
+    df_merged.to_excel(output_file, index=False, startrow=4)
 
     # === Ouvre le fichier Excel avec openpyxl ===
     wb = load_workbook(output_file)
