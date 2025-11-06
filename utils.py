@@ -20,14 +20,16 @@ def define_status_correspondence(nb_total, nb_kos, nb_ok) -> str:
         "1": "ERROR",
         "2": "COMPLETED WITH ERRORS"
     }
-    if nb_total == nb_ok:
-        return correspondence["0"]
-    elif nb_total == nb_kos:
-        return correspondence["1"]
-    elif nb_kos > 0 and nb_ok > 0:
-        return correspondence["2"]
-    else:
+    if nb_total == 0:
         return "No file uploaded"
+    else:
+        if nb_total == nb_ok:
+            return correspondence["0"]
+        elif nb_total == nb_kos:
+            return correspondence["1"]
+        elif nb_kos > 0 and nb_ok > 0:
+            return correspondence["2"]
+        return ""
 
 
 def return_x_characters(s: str, x: int) -> str:

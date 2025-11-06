@@ -49,7 +49,7 @@ def collect_data_interface(base_dir, countries, year, month, day):
                     "Pays": define_countries_correspondence(country),
                     "Appli - emmetteur": "SHAREPOINT",
                     "Appli - Recepteur": "S4 Cloud",
-                    "Periodicite": "",
+                    "Periodicite": define_period_csas(interface),
                     "Status": define_status_correspondence(nb_total, nb_errors, nb_archives),
                     "Nb OK": nb_archives,
                     "Nb Warning": "",
@@ -64,15 +64,15 @@ def collect_data_interface(base_dir, countries, year, month, day):
             if country == "CSW":
                 # IN
                 in_path = os.path.join(interface_dir, "IN")
-                nb_ins = read_promark_file(in_path, date)
+                nb_ins = read_promark_file(in_path, promark_date)
 
                 # ERRORS
                 errors_path = os.path.join(interface_dir, "ERROR")
-                nb_errors = read_promark_file(errors_path, date)
+                nb_errors = read_promark_file(errors_path, promark_date)
 
                 # ARCHIVES
                 archive_path = os.path.join(interface_dir, "ARCHIVE")
-                nb_archives = read_promark_file(archive_path, date)
+                nb_archives = read_promark_file(archive_path, promark_date)
                 
                 for file_type in ["SAP140", "SAP220"]:
                     total = nb_ins[file_type] + nb_errors[file_type] + nb_archives[file_type]
@@ -111,14 +111,21 @@ def read_file(path, date) -> int:
 
     file_content = []
     for file in os.listdir(path):
-        if file.endswith(".csv") and date in file:
-            file_path = os.path.join(path, file)
-            try:
-                df = pd.read_csv(file_path)
-                file_content.append(df)
 
-            except Exception as e:
-                print(f"Erreur lecture {file_path}: {e}")
+        full_path = os.path.join(path, file)
+        if os.path.isfile(full_path):
+            edit_time = os.path.getmtime(full_path)
+            edit_time = datetime.datetime.fromtimestamp(edit_time)
+            date_str = str(edit_time.date())
+
+            if file.endswith(".csv") and date == date_str:
+                file_path = os.path.join(path, file)
+                try:
+                    df = pd.read_csv(file_path)
+                    file_content.append(df)
+
+                except Exception as e:
+                    print(f"Erreur lecture {file_path}: {e}")
 
     if file_content:
         combined_df = pd.concat(file_content, ignore_index=True)
@@ -132,27 +139,31 @@ def read_promark_file(path, date) -> dict[str, int]:
         "SAP220": 0
     }
 
-    edit_time = os.path.getmtime(path)
-    edit_time = datetime.datetime.fromtimestamp(edit_time)
-
     if not os.path.exists(path):
         return nb_data
 
     file_sap140_content = []
     file_sap220_content = []
     for file in os.listdir(path):
-        if file.endswith(".txt") and date == str(edit_time.date()):
 
-            file_path = os.path.join(path, file)
-            content = produce_data_frame(file_path, file)
+        full_path = os.path.join(path, file)
+        if os.path.isfile(full_path):
+            edit_time = os.path.getmtime(full_path)
+            edit_time = datetime.datetime.fromtimestamp(edit_time)
+            date_str = str(edit_time.date())
 
-            if "SAP140" in file:
-                if content is not None:
-                    file_sap140_content.append(content)
+            if file.endswith(".txt") and date == date_str:
 
-            if "SAP220" in file:
-                if content is not None:
-                    file_sap220_content.append(content)
+                file_path = os.path.join(path, file)
+                content = get_data_frame_from_file(file_path, file)
+
+                if "SAP140" in file:
+                    if content is not None:
+                        file_sap140_content.append(content)
+
+                if "SAP220" in file:
+                    if content is not None:
+                        file_sap220_content.append(content)
 
     if file_sap140_content:
         combined_sap140_df = pd.concat(file_sap140_content, ignore_index=True)
@@ -164,10 +175,18 @@ def read_promark_file(path, date) -> dict[str, int]:
 
     return nb_data
 
-def produce_data_frame(path, file) -> DataFrame | None:
+def get_data_frame_from_file(path, file) -> DataFrame | None:
     file_path = os.path.join(path, file)
     try:
         return pd.read_csv(path, sep=";")
 
     except Exception as e:
         print(f"Erreur lecture {file_path}: {e}")
+
+
+def define_period_csas(interface) -> str:
+    csas_period = {
+        "CSAS_INTERFACE_PAYROLL": "Between the 20th and 31st of each month",
+        "CSAS_INTERFACE_TRAVEL_EXPENSE": "Between the 20th and 30th of each month"
+    }
+    return csas_period[interface] if interface in csas_period else ""
