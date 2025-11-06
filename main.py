@@ -6,8 +6,8 @@ from collect_monitoring_interface import collect_all_monitoring_data
 from collect_data_interface import collect_data_interface
 from openpyxl import load_workbook
 from openpyxl.drawing.image import Image
-from openpyxl.styles import Alignment
-
+from openpyxl.styles import Alignment, Font
+from openpyxl.utils import get_column_letter
 
 def main():
     # Demande le jour à traiter (par défaut aujourd'hui)
@@ -63,16 +63,28 @@ def main():
         ws.add_image(img, "A1")
 
     # === Ajout du titre centré ===
-    titre = f"Consolidation Monitoring - {YEAR}-{MONTH}-{day}"
-    ws.merge_cells("C1:H2")  # fusion de cellules pour le titre
-    cell = ws["C1"]
+    titre = f"Global Monitoring of Interfaces on {YEAR}-{MONTH}-{day}"
+    ws.merge_cells("C2:H4")  # fusion de cellules pour le titre
+    cell = ws["C2"]
     cell.value = titre
     cell.alignment = Alignment(horizontal="center", vertical="center")
-    #cell.font = Font(size=16, bold=True)
+    cell.font = Font(size=18, bold=True)
 
-    # === Décale les données vers le bas (pour ne pas écraser le logo/titre) ===
-    # (Optionnel si tu veux que le tableau commence plus bas)
+    # Débute l'écriture dans à la ligne 6 (le compte débute à 0)
     ws.insert_rows(5)
+
+    for column_cells in ws.columns:
+        max_length = 0
+        column = column_cells[0].column
+        column_letter = get_column_letter(column)
+        for cell in column_cells:
+            try:
+                cell_length = len(str(cell.value)) if cell.value else 0
+                if cell_length > max_length:
+                    max_length = cell_length
+            except:
+                pass
+        ws.column_dimensions[column_letter].width = max_length + 2
 
     wb.save(output_file)
     print(f"✅ Fichier Excel final enrichi : {output_file}")
