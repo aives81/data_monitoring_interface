@@ -166,12 +166,20 @@ def read_promark_file(path, date) -> dict[str, int]:
                         file_sap220_content.append(content)
 
     if file_sap140_content:
-        combined_sap140_df = pd.concat(file_sap140_content, ignore_index=True)
-        nb_data["SAP140"] = combined_sap140_df.shape[0]
+        filtered_file_sap140_content = [
+            df for df in file_sap140_content if not df.empty and not df.isna().all().all()
+        ]
+        if filtered_file_sap140_content:
+            combined_sap140_df = pd.concat(filtered_file_sap140_content, ignore_index=True)
+            nb_data["SAP140"] = combined_sap140_df.shape[0]
 
-    if file_sap140_content:
-        combined_sap220_df = pd.concat(file_sap220_content, ignore_index=True)
-        nb_data["SAP220"] = combined_sap220_df.shape[0]
+    if file_sap220_content:
+        filtered_file_sap220_content = [
+            df for df in file_sap220_content if not df.empty and not df.isna().all().all()
+        ]
+        if filtered_file_sap220_content:
+            combined_sap220_df = pd.concat(filtered_file_sap220_content, ignore_index=True)
+            nb_data["SAP220"] = combined_sap220_df.shape[0]
 
     return nb_data
 
@@ -186,7 +194,7 @@ def get_data_frame_from_file(path, file) -> DataFrame | None:
 
 def define_period_csas(interface) -> str:
     csas_period = {
-        "CSAS_INTERFACE_PAYROLL": "Between the 20th and 31st of each month",
-        "CSAS_INTERFACE_TRAVEL_EXPENSE": "Between the 20th and 30th of each month"
+        "INTERFACE_PAYROLL": "Between the 20th and 31st of each month",
+        "INTERFACE_TRAVEL_EXPENSE": "Between the 20th and 30th of each month"
     }
     return csas_period[interface] if interface in csas_period else ""

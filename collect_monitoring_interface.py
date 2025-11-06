@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from config import MONITORING_INTERFACES
-from utils import return_x_characters, define_status_correspondence, define_countries_correspondence
+from utils import return_x_characters, define_status_correspondence, define_countries_correspondence, get_static_source_and_target_from_interface
 
 
 def collect_all_monitoring_data(base_dir, countries, year, month, day):
@@ -45,6 +45,23 @@ def read_csvs_in_dir(path, country, interface, errors):
     """
     data = []
     if not os.path.exists(path):
+        source_target = get_static_source_and_target_from_interface(country + "_" + interface)
+        row = {
+            "Interface": country + "_" + interface,
+            "Pays": define_countries_correspondence(country),
+            "Appli - emmetteur": source_target["source"],
+            "Appli - Recepteur": source_target["target"],
+            "Periodicite": "Daily",
+            "Status": "The interface didn't run",
+            "Nb OK": "",
+            "Nb Warning": "",
+            "Nb Kos": "",
+            "Nb Total": "",
+            "Pourcentage d'intégration": f"{""} %",
+            "Commentaire": "",
+            "Fichier Source": ""
+        }
+        data.append(row)
         return data
 
     file_content = []
@@ -96,7 +113,8 @@ def read_csvs_in_dir(path, country, interface, errors):
             "Nb Kos": nb_kos,
             "Nb Total": nb_total,
             "Pourcentage d'intégration": f"{pourcentage} %",
-            "Commentaire": define_comment_content(error_messages, errors_from_error_file),
+            "Commentaire": "",
+            #"Commentaire": define_comment_content(error_messages, errors_from_error_file),
             "Fichier Source": ", ".join([f for f in os.listdir(path) if f.endswith(".csv")])
         }
         data.append(row)
@@ -124,6 +142,13 @@ def read_csvs_error_in_dir(path, country, interface):
     """
     errors = []
     if not os.path.exists(path):
+        row = {
+            "Interface": interface,
+            "Pays": define_countries_correspondence(country),
+            "ERROR_MESSAGE": "",
+            "Fichier Source": ""
+        }
+        errors.append(row)
         return errors
 
     file_content = []
