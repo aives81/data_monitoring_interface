@@ -195,6 +195,7 @@ def get_data_frame_from_file(path, file) -> DataFrame | None:
 def define_period_csas(interface) -> str:
     csas_period = {
         "INTERFACE_PAYROLL": "Between the 20th and 31st of each month",
-        "INTERFACE_TRAVEL_EXPENSE": "Between the 20th and 30th of each month"
+        "INTERFACE_TRAVEL_EXPENSE": "Between the 20th and 30th of each month",
+        "INTERFACE_ELECTRONIC_BANK_STATEMENT": "Daily: Monday - Friday"
     }
     return csas_period[interface] if interface in csas_period else ""

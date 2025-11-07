@@ -99,7 +99,7 @@ def read_csvs_in_dir(path, country, interface, errors):
         status = define_status_correspondence(nb_total, nb_kos, nb_ok)
 
         #Recupération des erreurs se trouvant dans les fichiers d'erreurs
-        errors_from_error_file = get_error_messages_from_errors_and_interface(errors, interface)
+        #errors_from_error_file = get_error_messages_from_errors_and_interface(errors, interface)
 
         row = {
             "Interface": country + "_" + interface,
